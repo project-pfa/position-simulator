@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+    environment {
+        REGISTRY = 'localhost:5000'
+        IMAGE_NAME = 'position-simulator'
+        DEPLOYMENT_FILE = '/home/admin13/position-simulator.yaml'  // Chemin exact du fichier
+    }
+    stages {
+        stage('Preparation') {
+            steps {
+                sh 'git rev-parse --short HEAD > .git/commit-id'
+                script {
+                    commit_id = readFile('.git/commit-id').trim()
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                echo 'BUILDING....'
+                sh './mvnw clean install'
+                echo 'BUILD COMPLETE'
+            }
+        }
+        stage('Image Build') {
+            steps {
+                echo 'BUILDING DOCKER IMAGE'
+                sh "docker build -t ${REGISTRY}/${IMAGE_NAME}:${commit_id} ."
+                echo 'BUILD COMPLETE'
+                echo 'PUSHING TO REGISTRY'
+                sh "docker push ${REGISTRY}/${IMAGE_NAME}:${commit_id}"
+                echo 'PUSH COMPLETE'
+            }
+        }
+        stage('Deploy to Minikube') {
+            steps {
+                echo 'Deploying to Minikube'
+                sh "minikube image load ${REGISTRY}/${IMAGE_NAME}:${commit_id}"
+                sh "kubectl set image deployment/position-simulator position-simulator=${REGISTRY}/${IMAGE_NAME}:${commit_id} --namespace=k8s-fleetman"
+                sh "kubectl apply -f ${DEPLOYMENT_FILE}"
+                echo 'DEPLOYMENT COMPLETE'
+            }
+        }
+    }
+}
