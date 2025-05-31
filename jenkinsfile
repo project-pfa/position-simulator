@@ -21,7 +21,7 @@ pipeline {
                 echo 'Setting kubectl context to Minikube...'
                 sh 'kubectl config use-context minikube'
                 echo 'Deploying to Minikube...'
-                sh "sed -i 's/commit_id/${commit_id}/g' ./manifests/position-simulator.yaml
+                sh "sed -i 's/commit_id/${commit_id}/g' ./manifests/position-simulator.yaml"
                 sh "kubectl get all"
                 sh "kubectl apply -f ./manifests/"
                 echo 'Deployment complete'
