@@ -1,0 +1,35 @@
+---
+# Position Simulator Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: position-simulator
+spec:
+  selector:
+    matchLabels:
+      app: position-simulator
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: position-simulator
+    spec:
+      containers:
+      - name: position-simulator
+        image: richardchesterwood/k8s-fleetman-position-simulator:release2
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: production-microservice
+---
+# Position Simulator Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: fleetman-position-simulator
+spec:
+  selector:
+    app: position-simulator
+  ports:
+  - name: http
+    port: 8080
+  type: ClusterIP
